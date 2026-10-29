@@ -3,177 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 導演思維 ✕ Scrollytelling 互動微動效</title>
-    <!-- 引入高質感設計庫 -->
+    <title>AI 多媒體工作流 ✕ Scrollytelling 向量互動網頁</title>
+    
+    <!-- 1. 引入 Tailwind CSS 進行視覺排版 -->
     <script src="https://tailwindcss.com"></script>
     <link href="https://googleapis.com" rel="stylesheet">
     
-    <!-- 引入 GSAP 核心與滾動插件 -->
+    <!-- 2. 引入 GSAP 3 全家桶 (核心、滾動觸發、平滑跳轉) -->
     <script src="https://cloudflare.com"></script>
     <script src="https://cloudflare.com"></script>
     <script src="https://cloudflare.com"></script>
 
     <style>
         body {
-            font-family: 'Plus Jakarta Sans', 'Noto Serif TC', sans-serif;
-            background-color: #0b0c10;
-            color: #c5a880;
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+            background-color: #020617; /* Slate-950 */
+            color: #f8fafc;
             overflow-x: hidden;
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0b0c10; }
-        ::-webkit-scrollbar-thumb { background: #1f2833; border-radius: 3px; }
+        /* 隱藏原生滾動條以維持極簡科技感 */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+        /* HUD 與互動元件高亮狀態 */
         .hud-btn.active {
-            color: #fff;
-            border-color: #c5a880;
-            background-color: rgba(197, 168, 128, 0.1);
+            color: #38bdf8; /* Sky-400 */
+            border-color: #38bdf8;
+            background-color: rgba(56, 189, 248, 0.1);
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+        }
+        .svg-dot {
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .svg-dot:hover {
+            transform: scale(1.5);
+            transform-origin: center;
         }
     </style>
 </head>
-<body>
+<body class="relative min-h-screen">
 
-    <!-- 導航 HUD -->
-    <nav class="fixed top-6 right-6 z-50 flex flex-col gap-3 bg-black/40 backdrop-blur-md p-4 rounded-xl border border-white/10">
-        <button onclick="scrollToPhase('#hero')" class="hud-btn text-xs tracking-widest uppercase text-left border-l-2 border-transparent pl-3 transition-all duration-300 hover:text-white">Top</button>
-        <button id="nav-p1" onclick="scrollToPhase('#phase1')" class="hud-btn text-xs tracking-widest uppercase text-left border-l-2 border-transparent pl-3 transition-all duration-300 hover:text-white">01. Selection</button>
-        <button id="nav-p2" onclick="scrollToPhase('#phase2')" class="hud-btn text-xs tracking-widest uppercase text-left border-l-2 border-transparent pl-3 transition-all duration-300 hover:text-white">02. Roasting</button>
-        <button id="nav-p3" onclick="scrollToPhase('#phase3')" class="hud-btn text-xs tracking-widest uppercase text-left border-l-2 border-transparent pl-3 transition-all duration-300 hover:text-white">03. Brewing</button>
-        <button id="nav-p4" onclick="scrollToPhase('#phase4')" class="hud-btn text-xs tracking-widest uppercase text-left border-l-2 border-transparent pl-3 transition-all duration-300 hover:text-white">04. Blooming</button>
+    <!-- 🌐 頂部即時進度條 -->
+    <div class="fixed top-0 left-0 w-full h-1 z-50 bg-slate-900">
+        <div id="top-progress-bar" class="h-full w-0 bg-gradient-to-r from-sky-500 via-indigo-500 to-emerald-500 shadow-[0_0_8px_#38bdf8]"></div>
+    </div>
+
+    <!-- 🎛️ HUD 側邊快捷切換導航 -->
+    <nav class="fixed top-1/2 -translate-y-1/2 right-6 z-50 flex flex-col gap-4 bg-slate-950/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800 shadow-2xl">
+        <button onclick="jumpToSection('#hero')" class="hud-btn text-[10px] tracking-widest uppercase text-left border-l-2 border-slate-800 pl-3 py-1 transition-all duration-300 text-slate-400 hover:text-white">INTRO</button>
+        <button id="hud-p1" onclick="jumpToPhase(0)" class="hud-btn text-[10px] tracking-widest uppercase text-left border-l-2 border-slate-800 pl-3 py-1 transition-all duration-300 text-slate-400 hover:text-white">01. Prompt</button>
+        <button id="hud-p2" onclick="jumpToPhase(1)" class="hud-btn text-[10px] tracking-widest uppercase text-left border-l-2 border-slate-800 pl-3 py-1 transition-all duration-300 text-slate-400 hover:text-white">02. Render</button>
+        <button id="hud-p3" onclick="jumpToPhase(2)" class="hud-btn text-[10px] tracking-widest uppercase text-left border-l-2 border-slate-800 pl-3 py-1 transition-all duration-300 text-slate-400 hover:text-white">03. Animate</button>
+        <button id="hud-p4" onclick="jumpToPhase(3)" class="hud-btn text-[10px] tracking-widest uppercase text-left border-l-2 border-slate-800 pl-3 py-1 transition-all duration-300 text-slate-400 hover:text-white">04. Master</button>
+        <button onclick="jumpToSection('#conclusion')" class="hud-btn text-[10px] tracking-widest uppercase text-left border-l-2 border-slate-800 pl-3 py-1 transition-all duration-300 text-slate-400 hover:text-white">DATA</button>
     </nav>
 
-    <!-- 固定動態 SVG 背景線 -->
+    <!-- 🌌 固定的 SVG 導軌與發光濾鏡區 -->
     <div class="fixed inset-0 pointer-events-none z-10 flex justify-center items-center">
-        <svg class="w-full h-full max-w-4xl opacity-40" viewBox="0 0 800 1000" fill="none" xmlns="http://w3.org">
-            <path id="svg-bg-path" d="M400 0 C200 250, 600 500, 400 750 C300 875, 500 950, 400 1000" stroke="#1f2833" stroke-width="4" stroke-linecap="round"/>
-            <path id="svg-interactive-path" d="M400 0 C200 250, 600 500, 400 750 C300 875, 500 950, 400 1000" stroke="#c5a880" stroke-width="6" stroke-linecap="round"/>
+        <svg class="w-full h-full max-w-5xl opacity-60" viewBox="0 0 1000 1000" fill="none" xmlns="http://w3.org">
+            <defs>
+                <!-- 螢光漸層發光濾鏡 (Glow Filter) -->
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <!-- 線條線性漸層 -->
+                <linearGradient id="cyber-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="50%" stop-color="#6366f1" />
+                    <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+            </defs>
+            
+            <!-- 靜態暗色底軌 -->
+            <path id="guideline-bg" d="M500 50 C250 250, 750 450, 200 650 C50 780, 800 850, 500 950" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+            
+            <!-- 動態同步描邊軌 -->
+            <path id="guideline-draw" d="M500 50 C250 250, 750 450, 200 650 C50 780, 800 850, 500 950" stroke="url(#cyber-gradient)" stroke-width="5" stroke-linecap="round" filter="url(#glow)"/>
+            
+            <!-- 互動時間軸節點 (雙向聯動圓點) -->
+            <circle id="dot-1" class="svg-dot" cx="390" cy="235" r="8" fill="#38bdf8" filter="url(#glow)"/>
+            <circle id="dot-2" class="svg-dot" cx="540" cy="455" r="8" fill="#6366f1" filter="url(#glow)"/>
+            <circle id="dot-3" class="svg-dot" cx="195" cy="690" r="8" fill="#a855f7" filter="url(#glow)"/>
+            <circle id="dot-4" class="svg-dot" cx="560" cy="915" r="8" fill="#10b981" filter="url(#glow)"/>
         </svg>
     </div>
 
-    <!-- 首頁 Hero 區塊 -->
-    <section id="hero" class="relative min-h-screen flex flex-col justify-center items-center text-center px-4 z-20">
-        <p class="text-xs uppercase tracking-[0.4em] mb-4 text-neutral-400">AI Director 思維工作坊</p>
-        <h1 class="text-4xl md:text-6xl font-semibold tracking-tight text-white mb-6 max-w-2xl leading-tight">
-            Crafting the Perfect <br><span class="text-[#c5a880] font-serif italic">Pour-Over Journey</span>
+    <!-- 🎬 SECTION 1: Hero 引言區塊 -->
+    <section id="hero" class="relative min-h-screen flex flex-col justify-center items-center text-center px-4 z-20 bg-gradient-to-b from-slate-950 to-slate-950/20">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.08)_0%,transparent_60%)] pointer-events-none"></div>
+        <p class="text-xs font-mono uppercase tracking-[0.5em] mb-4 text-sky-400">Creative Direction & Interaction</p>
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 leading-tight max-w-4xl">
+            AI 多媒體工作流 <br><span class="bg-gradient-to-r from-sky-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent font-light">Scrollytelling 互動實驗室</span>
         </h1>
-        <p class="text-sm max-w-md text-neutral-400 leading-relaxed mb-8">
-            向下滾動，透過網頁微動效與滾動敘事，探索一杯精品手沖咖啡從生豆到綻放的四個職人工序。
+        <p class="text-sm md:text-base max-w-xl text-slate-400 leading-relaxed mb-12">
+            滾動滑鼠，讓前端微動效引導視覺。透過高阻尼向量導軌，解構從提示詞生成到最終大師級母帶發布的 AI 創作巨變。
         </p>
-        <div class="animate-bounce text-xs uppercase tracking-widest text-[#c5a880]/60">↓ Scroll Down</div>
+        <div class="text-xs uppercase tracking-widest text-slate-500 animate-pulse">↓ 向下滾動開啟探索</div>
     </section>
 
-    <!-- 滾動敘事內容 (Phase 01 ~ 04) -->
-    <main class="relative z-20">
-        <!-- Phase 01 -->
-        <section id="phase1" class="phase-section min-h-screen flex items-center px-8 md:px-24">
-            <div class="max-w-md bg-black/60 p-8 rounded-2xl border border-white/5 backdrop-blur-md translate-y-12 opacity-0 content-box">
-                <span class="text-xs font-mono text-[#c5a880] tracking-widest block mb-2">PHASE 01</span>
-                <h2 class="text-2xl font-bold text-white mb-4">嚴選精品生豆 (Bean Selection)</h2>
-                <p class="text-neutral-400 text-sm leading-relaxed">
-                    故事起於高海拔莊園。我們只挑選密度高、含水量均勻且經手工剔除瑕疵的 100% 阿拉比卡生豆，為完美風味奠定純淨基石。
-                </p>
-            </div>
-        </section>
-
-        <!-- Phase 02 -->
-        <section id="phase2" class="phase-section min-h-screen flex items-center justify-end px-8 md:px-24">
-            <div class="max-w-md bg-black/60 p-8 rounded-2xl border border-white/5 backdrop-blur-md translate-y-12 opacity-0 content-box">
-                <span class="text-xs font-mono text-[#c5a880] tracking-widest block mb-2">PHASE 02</span>
-                <h2 class="text-2xl font-bold text-white mb-4">精準烘焙曲線 (Roasting Curve)</h2>
-                <p class="text-neutral-400 text-sm leading-relaxed">
-                    火候與時間的交響樂。透過電腦精密監控一爆時間點，將淺中焙的爆發力與花果香氣牢牢鎖在豆表之內，釋放豆體深層的地域風味。
-                </p>
-            </div>
-        </section>
-
-        <!-- Phase 03 -->
-        <section id="phase3" class="phase-section min-h-screen flex items-center px-8 md:px-24">
-            <div class="max-w-md bg-black/60 p-8 rounded-2xl border border-white/5 backdrop-blur-md translate-y-12 opacity-0 content-box">
-                <span class="text-xs font-mono text-[#c5a880] tracking-widest block mb-2">PHASE 03</span>
-                <h2 class="text-2xl font-bold text-white mb-4">極致研磨注水 (Precision Brewing)</h2>
-                <p class="text-neutral-400 text-sm leading-relaxed">
-                    日製定規陶瓷濾杯。以 92 度的純淨熱水，由內向外畫圈注入，水流與咖啡粉完美交融，細緻的粉層規律呼吸，激發黃金萃取。
-                </p>
-            </div>
-        </section>
-
-        <!-- Phase 04 -->
-        <section id="phase4" class="phase-section min-h-screen flex items-center justify-end px-8 md:px-24">
-            <div class="max-w-md bg-black/60 p-8 rounded-2xl border border-white/5 backdrop-blur-md translate-y-12 opacity-0 content-box">
-                <span class="text-xs font-mono text-[#c5a880] tracking-widest block mb-2">PHASE 04</span>
-                <h2 class="text-2xl font-bold text-white mb-4">極致風味綻放 (Flavor Blooming)</h2>
-                <p class="text-neutral-400 text-sm leading-relaxed">
-                    入喉的感官盛宴。茉莉花香混合著熱帶水果的微酸，隨後帶出明亮甘甜的焦糖後韻。這不僅是一杯咖啡，更是一場五感的精采動態敘事。
-                </p>
-            </div>
-        </section>
-    </main>
-
-    <!-- 頁尾、導演提示詞與心得區 -->
-    <footer class="relative z-20 min-h-screen bg-black/90 flex flex-col justify-center items-center border-t border-white/5 px-6 py-16">
-        <div class="max-w-2xl w-full space-y-12">
-            <!-- 導演提示詞 -->
-            <div class="bg-white/5 p-6 rounded-xl border border-white/10">
-                <h3 class="text-lg font-semibold text-white mb-3">🎬 步驟二：5秒 Hero 區塊 AI 導演提示詞</h3>
-                <p class="text-sm text-neutral-300 font-mono bg-black/40 p-4 rounded-lg leading-relaxed select-all">
-                    Slow 35mm dolly-in shot at eye level. A ceramic coffee dripper with delicate dark roast grounds receiving a gentle spiral pour of steaming water. Minimalist concrete counter, warm morning golden hour backlighting, soft steam motes floating in air. Shot on Arri Alexa, cinematic 4K, 24fps.
-                </p>
-                <p class="text-xs text-neutral-500 mt-2">（中文說明：鏡頭在眼部高度以35mm鏡頭緩慢推進。精緻深焙咖啡粉的陶瓷濾杯正接受溫和螺旋注入的熱水。極簡水泥檯面、溫暖的清晨黃金時刻逆光、空中飄浮著柔和的蒸汽微粒。使用 Arri Alexa 拍攝，電影級 4K，24fps。）</p>
-            </div>
-
-            <!-- 創作心得 -->
-            <div class="bg-white/5 p-6 rounded-xl border border-white/10">
-                <h3 class="text-lg font-semibold text-white mb-3">✍️ 創作心得簡述 (50~100字)</h3>
-                <p class="text-sm text-neutral-300 leading-relaxed">
-                    這次嘗試用 GSAP 實作 Scrollytelling，深刻體會到向量 SVG 動效的強大。以往用 4K 影片做背景既吃效能又影響載入速度，而透過程式碼控制 SVG 路徑，不僅網頁能在毫秒內開完，滾動時線條與文字精密配合的流暢感，更能傳達出精品咖啡的職人專注感，真正做到用網頁講故事。
-                </p>
-            </div>
+    <!-- 🔒 SECTION 2: Pinned 核心展示視窗區塊 (滿版劇場) -->
+    <section id="pinned-container" class="relative z-20 min-h-screen bg-transparent">
+        <div class="sticky-viewport sticky top-0 h-screen w-full flex items-center overflow-hidden">
             
-            <p class="text-xs text-neutral-600 text-center">© 2026 AI Director 思維工作坊 . All rights reserved.</p>
+            <!-- 左/右側動態內容卡片容器 -->
+            <div class="container mx-auto px-6 md:px-24 w-full relative h-[60vh] flex items-center">
+                
+                <!-- Phase 01 -->
+                <div class="phase-card absolute max-w-md bg-slate-950/80 p-8 rounded-2xl border border-slate-800/80 backdrop-blur-xl shadow-2xl opacity-0 transform translate-y-8 pointer-events-none">
+                    <span class="text-xs font-mono text-sky-400 tracking-widest block mb-2">PHASE 01 / INGESTION</span>
+                    <h2 class="text-2xl font-bold text-white mb-4">導演思維提示詞 (AI Prompting)</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        運用精準的光學焦段與運鏡語言設計萬能 Prompt。將傳統抽象的文字構想，轉譯為具備鏡頭深度、光影色調與影視級規格的 AI 生成根基。
+                    </p>
+                </div>
+
+                <!-- Phase 02 -->
+                <div class="phase-card absolute max-w-md right-0 bg-slate-950/80 p-8 rounded-2xl border border-slate-800/80 backdrop-blur-xl shadow-2xl opacity-0 transform translate-y-8 pointer-events-none">
+                    <span class="text-xs font-mono text-indigo-400 tracking-widest block mb-2">PHASE 02 / RENDERING</span>
+                    <h2 class="text-2xl font-bold text-white mb-4">神經網絡渲染 (Neural Render)</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        雲端算力集群瞬間爆發。擴散模型在幾秒內完成數百步去噪演算，將純文字矩陣轉化為高畫質、具備動態物理真實感的 4K 原生視覺資產。
+                    </p>
+                </div>
+
+                <!-- Phase 03 -->
+                <div class="phase-card absolute max-w-md bg-slate-950/80 p-8 rounded-2xl border border-slate-800/80 backdrop-blur-xl shadow-2xl opacity-0 transform translate-y-8 pointer-events-none">
+                    <span class="text-xs font-mono text-purple-400 tracking-widest block mb-2">PHASE 03 / ANIMATION</span>
+                    <h2 class="text-2xl font-bold text-white mb-4">向量動效融合 (Interactive Motion)</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        擺脫傳統數十 MB 背景影片的效能包袱。透過輕量化 SVG 與 GSAP 微動效，實現零延遲、高畫質的現代無障礙互動，讓動態完全隨滾輪意志精密起舞。
+                    </p>
+                </div>
+
+                <!-- Phase 04 -->
+                <div class="phase-card absolute max-w-md right-0 bg-slate-950/80 p-8 rounded-2xl border border-slate-800/80 backdrop-blur-xl shadow-2xl opacity-0 transform translate-y-8 pointer-events-none">
+                    <span class="text-xs font-mono text-emerald-400 tracking-widest block mb-2">PHASE 04 / DEPLOYMENT</span>
+                    <h2 class="text-2xl font-bold text-white mb-4">大師級母帶發布 (Master Delivery)</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        最終串流優化與自動分發。網頁載入瞬間完成，兼顧極致效能與電影級視覺美學品味，成功打造新世代多媒體故事行銷的終極落地閉環。
+                    </p>
+                </div>
+
+            </div>
         </div>
-    </footer>
+    </section>
 
-    <!-- GSAP 互動核心控制腳本 -->
-    <script>
-        gsap.registerPlugin(ScrollTrigger);
-
-        // 1. SVG 描線初始化
-        const path = document.querySelector("#svg-interactive-path");
-        const pathLength = path.getTotalLength();
-        gsap.set(path, { strokeDasharray: pathLength, strokeDashoffset: pathLength });
-
-        // 2. 滾動與 SVG 描線進度同步
-        gsap.to(path, {
-            strokeDashoffset: 0,
-            ease: "none",
-            scrollTrigger: {
-                trigger: "main",
-                start: "top top",
-                end: "bottom bottom",
-                scrub: 0.5
-            }
-        });
-
-        // 3. 各階段內容淡入淡出 與 HUD 按鈕同步高亮
-        const sections = document.querySelectorAll(".phase-section");
-        sections.forEach((section, index) => {
-            const content = section.querySelector(".content-box");
-            const navId = `#nav-p${index + 1}`;
-
-            gsap.to(content, {
-                opacity: 1,
-                y: 0,
-                duration: 1,
-                scrollTrigger: {
-                    trigger: section,
-                    start: "top 60%",
-                    end: "bottom 40%",
-                    toggleActions: "play reverse play reverse",
-                    onEnter: () => activateNav(navId),
-                    onEnterBack: () => activateNav(navId),
-                    onLeave: () => deactivateNav(navId),
-                    onLeaveBack: () => (index === 0) ? activateNav('button[onclick*="hero"]') : deactivateNav(navId)
-                }
-            });
-        });
-
-        function activateNav(id) {
+    <!-- 📊 SECTION 3: 後續結論數據區塊 -->
+    <section id="conclusion" class="relative z-20 min-h-screen bg-slate-950 flex flex-col justify-center items-center border-t border-slate-900 px-6 py-20 text-center">
